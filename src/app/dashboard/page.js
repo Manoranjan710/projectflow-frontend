@@ -1,8 +1,12 @@
+'use client';
+import AuthGuard from '@/components/AuthGuard'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <AuthGuard>
+          <div>page</div>
+    </AuthGuard>
   )
 }
 

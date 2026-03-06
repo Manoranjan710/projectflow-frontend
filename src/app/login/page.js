@@ -2,12 +2,15 @@
 import React from "react";
 import { useState } from "react";
 import { loginUser } from "@/services/authApi";
+import { useRouter } from "next/navigation";
 
 const page = () => {
     const [loginFormData, setLoginFormData] = useState({
         email: "",
         password: ""
     });
+
+    const router = useRouter();
 
     const handleChange = (e)=>{
         setLoginFormData({
@@ -20,11 +23,12 @@ const page = () => {
         e.preventDefault();
         try {
             const res = await loginUser(loginFormData);
+            console.log(res);
             const token = res.data.accessToken;
             localStorage.setItem("token", token);
             router.push("/dashboard");
         } catch (err) {
-            alert("Login failed.");
+            alert(err);
         }
     };
 
