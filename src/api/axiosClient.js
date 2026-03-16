@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "sonner";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:5000/api/v1",
@@ -26,6 +27,7 @@ axiosClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      toast.error("Session expired. Please sign in again.");
       window.location.href = "/login";
     }
 

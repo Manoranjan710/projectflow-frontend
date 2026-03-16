@@ -6,11 +6,13 @@ import Sidebar from '@/components/Sidebar';
 const DashboardLayout = ({ children }) => {
   return (
    <AuthGuard>
-        <div className='flex h-screen'>
+        <div className='flex min-h-screen bg-slate-50'>
             <Sidebar />
-            <div className='flex-1 p-4 bg-gray-100'>
+            <main className='flex-1'>
+              <div className='mx-auto w-full max-w-6xl p-6'>
                 {children}
-            </div>
+              </div>
+            </main>
          </div>
    </AuthGuard>
   )
