@@ -18,3 +18,12 @@ export const addMember = async (projectId, userId) => {
 
   return res.data;
 };
+
+export const removeMember = async (projectId, userId) => {
+
+  const res = await axiosClient.delete(
+    `/projects/${projectId}/members/${userId}`
+  );
+
+  return res.data;
+};
