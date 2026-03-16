@@ -6,3 +6,15 @@ export const getProjects = async (params) => {
     });
     return response.data;
 }
+
+export const createProject = async (data) => {
+  const response = await axiosClient.post("/projects", data);
+  return response.data;
+};
+
+export const getProjectDetails = async (projectId) => {
+
+  const res = await axiosClient.get(`/projects/${projectId}`);
+
+  return res.data;
+};

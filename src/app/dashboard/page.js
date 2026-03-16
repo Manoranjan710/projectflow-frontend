@@ -2,7 +2,9 @@
 import React from "react";
 import { useEffect, useState, useMemo } from "react";
 import { getProjects } from "@/services/projectApi";
+import CreateProjectModal from "@/components/CreateProjectModal";
 import debounce from "lodash/debounce";
+import { useRouter } from "next/navigation";
 
 const page = () => {
   const [projects, setProjects] = useState([]);
@@ -12,6 +14,9 @@ const page = () => {
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const router = useRouter();
 
   // Create debounced search function
   const debouncedSetSearch = useMemo(
@@ -74,12 +79,12 @@ const page = () => {
           <option value="pending">Pending</option>
         </select>
 
-        {/* <button
-          onClick={() => setPage(1)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
-          Search
-        </button> */}
+          + Create Project
+        </button>
       </div>
 
       <table className="w-full bg-white shadow rounded">
@@ -93,7 +98,11 @@ const page = () => {
         </thead>
         <tbody>
           {projects?.map((project) => (
-            <tr key={project.id} className="border-t">
+            <tr
+              key={project.id}
+              className="border-t cursor-pointer hover:bg-gray-100"
+              onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+            >
               <td className="p-3">{project?.title}</td>
               <td className="p-3">{project?.description}</td>
               <td className="p-3">{project?.status}</td>
@@ -126,6 +135,13 @@ const page = () => {
           Next
         </button>
       </div>
+
+      {showModal && (
+        <CreateProjectModal
+          onClose={() => setShowModal(false)}
+          onCreated={fetchProjects}
+        />
+      )}
     </div>
   );
 };
