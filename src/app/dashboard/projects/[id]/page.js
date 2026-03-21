@@ -8,6 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import getApiErrorMessage from "@/utils/getApiErrorMessage";
 import Pagination from "@/components/ui/Pagination";
+import ProjectChatWidget from "@/components/ProjectChatWidget";
 
 export default function ProjectPage() {
   const { id } = useParams();
@@ -387,6 +388,7 @@ export default function ProjectPage() {
           </div>
         </>
       )}
+      {project && <ProjectChatWidget projectId={id} />}
     </div>
   );
 }
