@@ -65,9 +65,8 @@ export default function ProjectChat({ projectId }) {
 
   return (
     <div className="bg-white p-4 rounded shadow mt-8 height-[400px]  overflow-scroll">
-      <h2 className="text-xl font-semibold mb-3">AI Assistant 🤖</h2>
 
-      <div className="p-3 border-t flex gap-2">
+      <div className="p-3 flex gap-2">
         <input
           type="text"
           value={question}
@@ -100,8 +99,6 @@ export default function ProjectChat({ projectId }) {
             {msg.content}
           </div>
         ))}
-
-        {loading && <div className="text-gray-500 text-sm">Typing...</div>}
       </div>
 
       {loading && <p className="text-gray-500">Thinking...</p>}
