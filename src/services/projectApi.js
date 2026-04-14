@@ -23,3 +23,8 @@ export const deleteProject = async (projectId) => {
   const res = await axiosClient.delete(`/projects/${projectId}`);
   return res.data;
 };
+
+export const patchProject = async (projectId, data) => {
+  const res = await axiosClient.patch(`/projects/${projectId}`, data);
+  return res.data;
+};

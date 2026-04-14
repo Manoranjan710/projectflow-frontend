@@ -3,6 +3,7 @@ import React from "react";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { deleteProject, getProjects } from "@/services/projectApi";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import UpdateProjectModal from "@/components/UpdateProjectModal";
 import debounce from "lodash/debounce";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,7 +18,9 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [projectToEdit, setProjectToEdit] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [openActionsForId, setOpenActionsForId] = useState(null);
 
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
@@ -70,6 +73,19 @@ const Page = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  useEffect(() => {
+    if (!openActionsForId) return;
+
+    const handler = (event) => {
+      const el = event.target;
+      if (el?.closest?.("[data-actions-root]")) return;
+      setOpenActionsForId(null);
+    };
+
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [openActionsForId]);
 
   const handleConfirmDelete = async () => {
     if (!projectToDelete?.id || isDeleting) return;
@@ -130,9 +146,8 @@ const Page = () => {
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 md:max-w-xs"
           >
             <option value="">All status</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="ARCHIVED">ARCHIVED</option>
           </select>
 
           <div className="flex-1" />
@@ -182,7 +197,7 @@ const Page = () => {
                   Created by
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Action
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -231,18 +246,65 @@ const Page = () => {
                       {project?.created_by || "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setProjectToDelete(project);
-                        }}
-                        className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
-                        aria-label={`Delete ${project?.title ?? "project"}`}
-                        title="Delete project"
+                      <div
+                        className="relative inline-flex"
+                        data-actions-root="true"
                       >
-                        Delete
-                      </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenActionsForId((curr) =>
+                              curr === project.id ? null : project.id,
+                            );
+                          }}
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          aria-label={`Actions for ${project?.title ?? "project"}`}
+                          title="Actions"
+                        >
+                          Action
+                        </button>
+
+                        {openActionsForId === project.id && (
+                          <div className="absolute right-0 top-full z-10 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionsForId(null);
+                                router.push(
+                                  `/dashboard/projects/${project.id}`,
+                                );
+                              }}
+                              className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                              Add/remove members
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionsForId(null);
+                                setProjectToEdit(project);
+                              }}
+                              className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                              Update project
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionsForId(null);
+                                setProjectToDelete(project);
+                              }}
+                              className="block w-full px-4 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-50"
+                            >
+                              Delete project
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -267,6 +329,14 @@ const Page = () => {
           onClose={() => setShowModal(false)}
           onCreated={fetchProjects}
           />
+      )}
+
+      {projectToEdit && (
+        <UpdateProjectModal
+          project={projectToEdit}
+          onClose={() => setProjectToEdit(null)}
+          onUpdated={fetchProjects}
+        />
       )}
 
       {projectToDelete && (
