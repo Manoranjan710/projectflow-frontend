@@ -18,3 +18,8 @@ export const getProjectDetails = async (projectId) => {
 
   return res.data;
 };
+
+export const deleteProject = async (projectId) => {
+  const res = await axiosClient.delete(`/projects/${projectId}`);
+  return res.data;
+};

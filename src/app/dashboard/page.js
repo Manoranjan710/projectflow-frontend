@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { useEffect, useState, useMemo } from "react";
-import { getProjects } from "@/services/projectApi";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { deleteProject, getProjects } from "@/services/projectApi";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import debounce from "lodash/debounce";
 import { useRouter } from "next/navigation";
@@ -10,12 +10,14 @@ import getApiErrorMessage from "@/utils/getApiErrorMessage";
 import EmptyState from "@/components/ui/EmptyState";
 import Pagination from "@/components/ui/Pagination";
 
-const page = () => {
+const Page = () => {
   const [projects, setProjects] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ const page = () => {
     };
   }, [inputValue, debouncedSetSearch]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
@@ -63,11 +65,36 @@ const page = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, search, status]);
 
   useEffect(() => {
     fetchProjects();
-  }, [page, status, search]);
+  }, [fetchProjects]);
+
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete?.id || isDeleting) return;
+
+    const projectId = projectToDelete.id;
+    setIsDeleting(true);
+
+    const promise = deleteProject(projectId).then((res) => {
+      setProjectToDelete(null);
+      return res;
+    });
+
+    toast.promise(promise, {
+      loading: "Deleting project...",
+      success: "Project deleted.",
+      error: (err) => getApiErrorMessage(err),
+    });
+
+    try {
+      await promise;
+      await fetchProjects();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div>
@@ -154,6 +181,9 @@ const page = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Created by
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -171,6 +201,9 @@ const page = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="ml-auto h-8 w-16 animate-pulse rounded bg-slate-200" />
                     </td>
                   </tr>
                 ))
@@ -197,6 +230,20 @@ const page = () => {
                     <td className="px-4 py-3 text-sm text-slate-600">
                       {project?.created_by || "—"}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setProjectToDelete(project);
+                        }}
+                        className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                        aria-label={`Delete ${project?.title ?? "project"}`}
+                        title="Delete project"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -219,10 +266,55 @@ const page = () => {
         <CreateProjectModal
           onClose={() => setShowModal(false)}
           onCreated={fetchProjects}
-        />
+          />
+      )}
+
+      {projectToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delete project confirmation"
+          onClick={() => !isDeleting && setProjectToDelete(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-900">
+              Delete project?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              This will permanently delete{" "}
+              <span className="font-medium text-slate-900">
+                {projectToDelete?.title ?? "this project"}
+              </span>
+              .
+            </p>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setProjectToDelete(null)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-70"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-70"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 };
 
-export default page;
+export default Page;
